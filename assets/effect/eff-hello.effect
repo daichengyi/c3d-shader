@@ -1,0 +1,85 @@
+// Effect Syntax Guide: https://docs.cocos.com/creator/manual/zh/shader/index.html
+// YAML 声明的所有流程
+CCEffect %{
+  techniques:
+  - name: opaque
+    passes:
+    - vert: legacy/main-functions/general-vs:vert # builtin header
+      frag: unlit-fs:myFrag
+      properties: &props
+        # 着色器中需要同步定义一个 ‘uniform mainTexture’，该属性可在编辑器的属性检查器中进行配置
+        mainTexture:    { value: white }
+
+        # 基于 ‘target’ 属性配置机制，着色器中需要同步定义一个 ‘uniform colorScaleAndCutoff’
+        mainColor:      { value: [1, 1, 1, 1], editor: { type: color } }
+  - name: transparent
+    passes:
+    - vert: general-vs:vert # builtin header
+      frag: unlit-fs:myFrag
+      blendState:
+        targets:
+        - blend: true
+          blendSrc: src_alpha
+          blendDst: one_minus_src_alpha
+          blendSrcAlpha: src_alpha
+          blendDstAlpha: one_minus_src_alpha
+      properties: *props  # 引用*props
+      # properties: <<: *o1 # 继承*props
+}%
+
+//片元着色器代码
+CCProgram unlit-fs %{
+
+  //精度声明
+  precision highp float;
+
+  //内置变量 Uniform
+  //引用方法，导入对应命名空间 https://docs.cocos.com/creator/3.8/manual/zh/shader/uniform.html
+  //对应引擎资源库目录
+  #include <legacy/output>
+  #include <legacy/fog-fs>
+
+  #include <common/math/number>
+
+  //使用 range 来描述 FACTOR 宏的值范围
+  #pragma define-meta FACTOR range([-5, 5])
+  //当 FACTOR 只有 -3,-2,5 这三个值的情况下，我们就可以用 options 来处理。
+  #pragma define-meta FACTOR options([-3, -2, 5])
+
+  in vec2 v_uv;
+  in vec3 v_position;
+
+  uniform sampler2D mainTexture;
+
+  //存储限定符
+  //< none:default >	(无限定符或者使用 default，常用语局部变量，函数参数)
+  //const	(编译时为常量或作为参数时只读)
+  //attribute	(应用程序和顶点着色器间通信，用于确定顶点格式)
+  //uniform	(应用程序和着色器之间交互数据。在顶点着色器和片元着色器中保持一致)
+  //varying	(顶点着色器传输给片元着色器的插值)
+
+  uniform Constant {
+    vec4 mainColor;
+  };
+
+  vec4 myFrag () {
+
+    //循环变量必须是常量，或者编译时已知
+    const float value = 10.; 
+    for(float i = 0.0; i < value; i ++){ 
+    
+    }
+
+    //引入 #include <common/data/packing>
+    bool flag = isinf(0.5);
+
+    vec4 col = mainColor * texture(mainTexture, v_uv);
+    CC_APPLY_FOG(col, v_position);
+    return CCFragOutput(col);
+  }
+}%
+
+
+// tips:
+// 1. 若需频繁设置 Uniform 的值，请使用 Pass.setUniform 来获得更好的性能
+// 2. 
