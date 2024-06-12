@@ -64,7 +64,14 @@ CCProgram rimlight-fs %{
 
     float rimInstensity = rimColor.a;  // alpha 通道为亮度的指数
 
+    // 通过 pow 函数调整边缘光，使其范围不是线性变化，可体现更好的效果，删除如下代码：
+    // col.rgb += rimPower * rimColor.rgb;
+
+    // pow(x, p)，代表以 x 为底数，p 为指数的指数函数
     col.rgb += pow(rimPower, rimInstensity) * rimColor.rgb; // 增加边缘光
+
+    // 让边缘光的颜色受纹理颜色的影响
+    // col.rgb *= 1.0 + pow(rimPower, rimInstensity) * rimColor.rgb; // 边缘光受物体着色的影响
 
     CC_APPLY_FOG(col, v_position); 
 
