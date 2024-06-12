@@ -43,3 +43,12 @@ CCProgram unlit-fs %{
     return CCFragOutput(col);
   }
 }%
+
+// CCFragOutput方法,实现了对hdr和srgb的转换
+// vec4 CCFragOutput (vec4 color) {
+//   #if CC_USE_HDR
+//     color.rgb = ACESToneMap(color.rgb);
+//   #endif
+//   color.rgb = LinearToSRGB(color.rgb);
+//   return color;
+// }

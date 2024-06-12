@@ -1,6 +1,5 @@
 // Effect Syntax Guide: https://docs.cocos.com/creator/manual/zh/shader/index.html
 
-// 信息描述
 CCEffect %{
   techniques:
   - name: opaque
@@ -62,8 +61,7 @@ CCEffect %{
     - *shadow-caster
 }%
 
-// 共享常量  vs 和 fs 都会用到的，或者多个 technique 和 pass 都需要用到的
-// 在后面的组装环节，只需要 #include <shared-ubos> 即可
+
 CCProgram shared-ubos %{
   uniform Constants {
     vec4 albedo;
@@ -72,7 +70,6 @@ CCProgram shared-ubos %{
   };
 }%
 
-// 宏映射
 CCProgram macro-remapping %{
   // ui displayed macros
   #pragma define-meta USE_TWOSIDE
@@ -81,15 +78,10 @@ CCProgram macro-remapping %{
   #define CC_SURFACES_USE_TWO_SIDED USE_TWOSIDE
   #define CC_SURFACES_USE_VERTEX_COLOR USE_VERTEX_COLOR
 }%
-
 CCProgram surface-vertex %{
   #define CC_SURFACES_VERTEX_MODIFY_WORLD_POS
-
-  out vec3 testVec3;
-
   vec3 SurfacesVertexModifyWorldPos(in SurfacesStandardVertexIntermediate In)
   {
-    //顶点位置修改
     return In.worldPos;
   }
   
@@ -105,12 +97,8 @@ CCProgram surface-vertex %{
   }
 }%
 
-// PBR 计算时需要的表面材质信息填充
+
 CCProgram surface-fragment %{
-
-  in vec3 testVec3;
-
-
   #if USE_ALBEDO_MAP
     uniform sampler2D albedoMap;
     #pragma define-meta ALBEDO_UV options([v_uv, v_uv1])
@@ -177,7 +165,7 @@ CCProgram surface-fragment %{
 
 
 
-// 顶点着色器相关
+
 CCProgram standard-vs %{
   precision highp float;
 
@@ -211,7 +199,7 @@ CCProgram shadow-caster-vs %{
 }%
 
 
-//  片元着色器相关
+
 CCProgram standard-fs %{
   // shading-model : standard
   // lighting-model : standard (isotropy / anisotropy pbr)

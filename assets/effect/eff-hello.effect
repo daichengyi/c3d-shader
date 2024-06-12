@@ -54,7 +54,7 @@ CCProgram unlit-fs %{
   //存储限定符
   //< none:default >	(无限定符或者使用 default，常用语局部变量，函数参数)
   //const	(编译时为常量或作为参数时只读)
-  //attribute	(应用程序和顶点着色器间通信，用于确定顶点格式)
+  //attribute	(应用程序和顶点着色器间通信，用于确定顶点格式-------------)
   //uniform	(应用程序和着色器之间交互数据。在顶点着色器和片元着色器中保持一致)
   //varying	(顶点着色器传输给片元着色器的插值)
 
@@ -82,4 +82,5 @@ CCProgram unlit-fs %{
 
 // tips:
 // 1. 若需频繁设置 Uniform 的值，请使用 Pass.setUniform 来获得更好的性能
-// 2. 
+// 2. 为某个pass单独开启或者关闭一些宏，可以使用 embeddedMacros 字段进行
+// 3.

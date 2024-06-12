@@ -1,0 +1,73 @@
+CCEffect %{
+  techniques:
+  - name: opaque
+    passes:
+    - vert: legacy/main-functions/general-vs:vert # builtin header 通常引擎内置的顶点着色器可以满足大部分的开发需求
+      frag: rimlight-fs:frag
+      properties: &props
+        mainTexture:    { value: white } 
+        mainColor:      { value: [1, 1, 1, 1], editor: { type: color } }    
+        
+        # Rim Light 的颜色，只依赖 rgb 三个通道的分量
+        rimLightColor:  { value: [1.0, 1.0, 1.0], target: rimColor.rgb, editor: { displayName: Rim Color, type: color } }
+        
+        # rimLightColor 的 alpha 通道没有被用到，复用该通道用来描述 rimLightColor 的强度。
+        rimInstensity:  { value: 1.0, target: rimColor.a, editor: {slide: true, range: [0, 10], step: 0.1}}   
+}%
+
+CCProgram rimlight-fs %{
+  precision highp float;
+  #include <builtin/uniforms/cc-global>
+  #include <legacy/output>
+  #include <legacy/fog-fs>
+
+  in vec2 v_uv;
+  in vec3 v_normal;
+  //需要计算法线和视角的夹角，法线已由顶点着色器传入到片元着色器
+  //增加：
+  in vec3 v_position;
+
+  uniform sampler2D mainTexture;
+
+  uniform Constant {
+    vec4 mainColor;
+    vec4 rimColor;  
+  }; 
+  vec4 frag(){     
+    vec3 normal = normalize(v_normal);  // 重新归一化法线。
+
+    vec3 viewDirection = cc_cameraPos.xyz - v_position; // 计算视线的方向
+
+    vec3 normalizedViewDirection = normalize(viewDirection);  // 对视线方向进行归一化
+
+    // 这时可计算法线和视角的夹角，在线性代数里面，点积表示为两个向量的模乘以夹角的余弦值：
+    // a·b = |a|*|b|*cos(θ)
+
+    // 通过简单的交换律可得出：
+    // cos(θ) = a·b /(|a|*|b|)
+
+    // 由于法线和视角方向都已经归一化，因此他们的模为 1，点积的结果则表示为法线和视角的 cos 值。
+    // cos(θ) = a·b
+
+    // 将其转化为代码：
+    // dot(normal, normalizedViewDirection)
+
+    // 注意点积的计算可能会出现小于 0 的情况，而颜色是正值，通过 max 函数将其约束在 [0, 1] 这个范围内：
+    // max(dot(normal, normalizedViewDirection), 0.0)
+
+    // 物体中心比边缘更亮，这是因为边缘顶点的法线和视角的夹角更大，得到的余弦值更小
+    // 使用 1.0 减去点积结果
+    // 根据点积的结果来调整 RimLight 的颜色
+    float rimPower = 1.0 - max(dot(normal, normalizedViewDirection), 0.0);// 计算 RimLight 的亮度
+
+    vec4 col = mainColor * texture(mainTexture, v_uv); // 计算最终的颜色
+
+    float rimInstensity = rimColor.a;  // alpha 通道为亮度的指数
+
+    col.rgb += pow(rimPower, rimInstensity) * rimColor.rgb; // 增加边缘光
+
+    CC_APPLY_FOG(col, v_position); 
+
+    return CCFragOutput(col);  
+  }
+}%
